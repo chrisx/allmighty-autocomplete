@@ -89,6 +89,7 @@ app.directive('autocomplete', function() {
         $scope.completing = false;
         setTimeout(function(){watching = true;},1000);
         $scope.setIndex(-1);
+        $scope.$emit('selected', suggestion);
       };
 
 
@@ -105,6 +106,10 @@ app.directive('autocomplete', function() {
         "inputclass": "",
         "inputid": ""
       };
+
+      scope.$on('selected', function (event, suggestion) {
+        element[0].focus();
+      });
 
       for (var a in attrs) {
         attr = a.replace('attr', '').toLowerCase();
