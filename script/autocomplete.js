@@ -108,7 +108,7 @@ app.directive('autocomplete', function() {
       };
 
       scope.$on('selected', function (event, suggestion) {
-        element[0].focus();
+        element.find('input').focus();
       });
 
       for (var a in attrs) {
