@@ -39,15 +39,16 @@ app.directive('autocomplete', function() {
       };
 
       $scope.getSuggestionIndex = function (suggestion) {
-        var totalCount = 0;
-        for(var propertyName in $scope.suggestions){
-          var index = _.findIndex($scope.suggestions[propertyName], suggestion);
-          if(index >= 0){
-            totalCount += index;
-            return totalCount;
-          }
-          totalCount += $scope.suggestions[propertyName].length;
-        };
+         var flattedSuggestions = _.flatten($scope.types.map(function(type){
+          var suggestions =  $scope.suggestions[type];
+          if(suggestions)
+            return suggestions.map(function(suggestion){
+              suggestion.category = type;
+              return suggestion;
+            });
+          return [];
+        }));
+        return _.findIndex(flattedSuggestions, suggestion);
       }
       // the index of the suggestions that's currently selected
       $scope.selectedIndex = -1;
