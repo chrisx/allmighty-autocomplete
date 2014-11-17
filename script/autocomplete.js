@@ -12,9 +12,43 @@ app.directive('autocomplete', function() {
       searchParam: '=ngModel',
       suggestions: '=data',
       onType: '=onType',
-      onSelect: '&onSelect'
+      onSelect: '&onSelect',
+      types: '='
     },
     controller: ['$scope', function($scope){
+      $scope.onEnterSelect = function (searchParam) {
+        var index = $scope.getIndex(); 
+        if(index <= -1)
+          if($scope.onSelect) 
+            return $scope.onSelect({$suggestion: searchParam});
+        $scope.selectIndex(index);
+      };
+
+      $scope.selectIndex = function (index) {
+        var flattedSuggestions = _.flatten($scope.types.map(function(type){
+          var suggestions =  $scope.suggestions[type];
+          if(suggestions)
+            return suggestions.map(function(suggestion){
+              suggestion.category = type;
+              return suggestion;
+            });
+          return [];
+        }));
+        var suggestion = flattedSuggestions[index];
+        $scope.select(suggestion, suggestion.category);
+      };
+
+      $scope.getSuggestionIndex = function (suggestion) {
+        var totalCount = 0;
+        for(var propertyName in $scope.suggestions){
+          var index = _.findIndex($scope.suggestions[propertyName], suggestion);
+          if(index >= 0){
+            totalCount += index;
+            return totalCount;
+          }
+          totalCount += $scope.suggestions[propertyName].length;
+        };
+      }
       // the index of the suggestions that's currently selected
       $scope.selectedIndex = -1;
 
@@ -78,9 +112,10 @@ app.directive('autocomplete', function() {
       $scope.preSelectOff = this.preSelectOff;
 
       // selecting a suggestion with RIGHT ARROW or ENTER
-      $scope.select = function(suggestion){
+      $scope.select = function(suggestion, category){
         if(suggestion){
-          $scope.searchParam = suggestion;
+          suggestion.category = category;
+          $scope.searchParam = suggestion.r;
           $scope.searchFilter = suggestion;
           if($scope.onSelect)
             $scope.onSelect({$suggestion: suggestion});
@@ -91,6 +126,7 @@ app.directive('autocomplete', function() {
         $scope.setIndex(-1);
         $scope.$emit('selected', suggestion);
       };
+
 
 
     }],
@@ -157,7 +193,8 @@ app.directive('autocomplete', function() {
       element[0].addEventListener("keydown",function (e){
         var keycode = e.keyCode || e.which;
 
-        var l = angular.element(this).find('li').length;
+        var l = angular.element(this).find('li.suggestion').length;
+        console.log ('index: ', scope.getIndex());
 
         // implementation of the up and down movement in the list of suggestions
         switch (keycode){
@@ -175,7 +212,7 @@ app.directive('autocomplete', function() {
             scope.setIndex(index);
 
             if(index!==-1)
-              scope.preSelect(angular.element(angular.element(this).find('li')[index]).text());
+              scope.preSelect(angular.element(angular.element(this).find('li.suggestion')[index]).text());
 
             scope.$apply();
 
@@ -194,7 +231,7 @@ app.directive('autocomplete', function() {
             scope.setIndex(index);
 
             if(index!==-1)
-              scope.preSelect(angular.element(angular.element(this).find('li')[index]).text());
+              scope.preSelect(angular.element(angular.element(this).find('li.suggestion')[index]).text());
 
             break;
           case key.left:
@@ -205,7 +242,7 @@ app.directive('autocomplete', function() {
             index = scope.getIndex();
             // scope.preSelectOff();
             if(index !== -1)
-              scope.select(angular.element(angular.element(this).find('li')[index]).text());
+              scope.select(angular.element(angular.element(this).find('li.suggestion')[index]).text());
             scope.setIndex(-1);
             scope.$apply();
 
